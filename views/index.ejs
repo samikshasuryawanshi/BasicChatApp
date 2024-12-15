@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        #message-box::-webkit-scrollbar{
+            display: none;
+        }
+        .chatPannel{
+            background-image: url(https://i.pinimg.com/736x/8c/98/99/8c98994518b575bfd8c949e91d20548b.jpg);
+            background-position: center;
+            background-size:contain;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex justify-center p-5 items-center">
+
+    <div class="chatPannel hidden bg-zinc-100 shadow-md rounded-lg flex flex-col w-full max-w-2xl h-full">
+        <div class="bg-green-700 p-4 rounded-t-lg flex items-center justify-between">
+            <h1 class="text-white text-xl font-semibold">Chat Room</h1>
+            <h3 class="text-white"><span class="onlineCount"></span> users live</h3>
+        </div>
+        <div id="message-box" class="h-96 overflow-y-auto relative p-4 space-y-4">
+            <!-- Messages will be rendered here -->
+
+
+        </div>
+        <div class="w-full h-6 px-4 flex items-center justify-start">
+            <small class="italic hidden text-semibold typing text-gray-800  text-l"><span class="typer">Somebody</span> is typing...</small>
+        </div>
+        <form autocomplete="off" id="message-form" class="flex p-4 bg-zinc-50 rounded-b-lg">
+            <input type="text" id="message-input" class="flex-1 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none" placeholder="Type a message......">
+            <button type="submit" class="ml-2 bg-green-700 hover:bg-green-800 text-white font-semibold py-2 px-4 rounded"><i class="ri-send-plane-fill"></i></button>
+        </form>
+    </div>
+
+    <div class="absolute prechat top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4 py-4 bg-zinc-100 flex flex-col ">
+        <h4 class="text-lg">Register</h4>
+        <input type="text" class="name mt-3 px-3 py-2 text-zinc-800 rounded w-52" placeholder="Enter your name">
+        <button class="startChat bg-blue-600 px-2 py-1 w-24 mt-2 rounded text-white">Start Chat</button>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script>
+        const name = document.querySelector(".name");
+        const messageInput = document.querySelector("#message-input");
+        const messageBox = document.querySelector("#message-box");
+        let username = null;
+
+        // Scroll to the bottom of the message box
+        function scrollToBottom() {
+            messageBox.scrollTop = messageBox.scrollHeight;
+        }
+
+        document.querySelector(".startChat").addEventListener("click", function () {
+            if (name.value.trim().length > 0) {
+                const socket = io();
+                username = name.value.trim();
+                socket.emit("userConnected", username);
+
+                document.querySelector(".prechat").classList.add("hidden");
+                document.querySelector(".chatPannel").classList.remove("hidden");
+
+                document.querySelector("#message-form").addEventListener("submit", function (event) {
+                    event.preventDefault();
+                    socket.emit("message", messageInput.value);
+                    messageInput.value = "";
+                });
+
+                socket.on("message", function (data) {
+                    if (data.id === socket.id) {
+                        messageBox.innerHTML += `
+                        <div class="flex justify-end mb-4">
+                            <div class="bg-green-700 text-white rounded-br-none rounded-lg py-2 px-4 max-w-[70%]">
+                                <p class="text-sm"> You : ${data.message}</p>
+                            </div>
+                        </div>
+                        `;
+                    } else {
+                        messageBox.innerHTML += `
+                        <div class="flex justify-start">
+                            <div class="bg-white rounded-lg rounded-bl-none p-3 max-w-xs text-sm text-gray-800 shadow">
+                                <p>${data.username} : ${data.message}</p>
+                            </div>
+                        </div>
+                        `;
+                    }
+                    scrollToBottom(); // Scroll to bottom after new message
+                });
+
+                socket.on("onlineusers", function (users) {
+                    document.querySelector(".onlineCount").textContent = users.length;
+                });
+
+                messageInput.addEventListener("input", function () {
+                    socket.emit("input", messageInput.value);
+                });
+
+                let timer;
+
+                // Listen for typing event from the socket
+                socket.on("input", function (username) {
+                    clearInterval(timer);
+
+                    document.querySelector(".typing").classList.remove("hidden");
+                    document.querySelector(".typer").textContent = username;
+
+                    timer = setInterval(function () {
+                        document.querySelector(".typing").classList.add("hidden");
+                        clearInterval(timer);
+                    }, 1000);
+                });
+            }
+        });
+    </script>
+
+</body>
+
+</html>

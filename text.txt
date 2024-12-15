@@ -1,0 +1,47 @@
+ const socket = io()
+
+        // document.querySelector(".on").addEventListener("click",function(){
+        //     socket.emit("clickedOn")
+        // })
+        // document.querySelector(".off").addEventListener("click",function(){
+        //     socket.emit("clickedOff")
+        // })
+
+       let timerElem = document.querySelector(".timer")
+       let timer = timerElem.textContent
+        const intervalId = setInterval(function() {
+        if (timer > 0) {
+            timer--;
+            timerElem.textContent = timer;
+            socket.emit("timer",timer)
+       } else {
+       clearInterval(intervalId);
+     }
+     },1000)
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+ <!-- <button class="on">on btn</button>
+    <button class="off">off btn</button> -->
+
+    <h1>0<span class="timer">5</span></h1>
+
+    >>>>>>>>>>>>>>>>>
+
+    io.on("connection",function(socket){
+//    socket.on("clickedOn",function(){
+//     console.log("on");
+//    })
+//    socket.on("clickedOff",function(){
+//     console.log("off");
+//    })
+
+// socket.on("timer",function(data){
+//     if(data === 0){
+//         console.log("timedone");
+//     }
+// })
+
+
+
+})
